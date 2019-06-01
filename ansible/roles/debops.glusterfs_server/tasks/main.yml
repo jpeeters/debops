@@ -1,0 +1,193 @@
+---
+
+- name: Update init script for Gluster server
+  copy:
+    src: 'files/etc/init.d/glusterfs-server'
+    dest: '/etc/init.d/glusterfs-server'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  notify: 'Restart Gluster server'
+
+- name: Reload systemd services
+  systemd:
+    daemon_reload: True
+
+- name: Create Gluster trusted pool
+  gluster_peer:
+    nodes: '{{ glusterfs_server__trusted_pool }}'
+    state: 'present'
+  run_once: True
+
+- name: List existing Gluster volumes
+  command: 'gluster volume list 2>/dev/null'
+  register: glusterfs_server__register_volume_list
+  run_once: True
+
+- name: Disable Gluster volume marked for deletion
+  gluster_volume:
+    state: 'absent'
+    name: '{{ item.name }}'
+  when: item.name|d(False) and item.state is defined and item.state == "absent" and
+        glusterfs_server__register_volume_list.rc == 0 and
+        item.name in glusterfs_server__register_volume_list.stdout_lines
+  with_items: '{{ glusterfs_server__volumes }}'
+
+- name: Unmount brick filesystems for volumes marked for deletion
+  mount:
+    state: 'absent'
+    path: '{{ item.mount
+              if (item.mount == item.mount | realpath)
+              else (glusterfs_server__default_mount_path + "/" + item.mount) }}'
+  when: item.mount|d(False) and item.state is defined and item.state == "absent"
+  with_items: '{{ glusterfs_server__combined_bricks }}'
+
+- name: Teardown LVM logical volumes marked for deletion
+  lvol:
+    lv:     '{{ item.lv }}'
+    vg:     '{{ item.vg }}'
+    state:  'absent'
+    force:  True
+  when: item.lv|d(False) and item.vg|d(False) and
+        item.state is defined and item.state == "absent"
+  with_items: '{{ glusterfs_server__combined_lvm_volumes }}'
+
+- name: Teardown LVM volume groups marked for deletion
+  lvg:
+    vg: '{{ item.vg }}'
+    state: 'absent'
+  when: item.vg|d(False) and item.state is defined and item.state == "absent"
+  with_items: '{{ glusterfs_server__combined_lvm_groups }}'
+
+- name: Setup LVM volume groups
+  lvg:
+    vg:         '{{ item.vg }}'
+    pvs:        '{{ item.pvs if item.pvs is string else item.pvs.join(",") }}'
+    state:      '{{ item.state   | d("present") }}'
+    pesize:     '{{ item.pesize  | d(omit) }}'
+    vg_options: '{{ item.opts    | d(glusterfs_server__default_lvm_vg_options) }}'
+    pv_options: '{{ item.pv_opts | d(glusterfs_server__default_lvm_pv_options) }}'
+    force:      '{{ item.force   | d(omit) }}'
+  with_items: '{{ glusterfs_server__combined_lvm_groups }}'
+  when: item.vg|d(False) and item.pvs|d(False)
+
+- name: Setup LVM logical volumes
+  lvol:
+    lv:     '{{ item.lv }}'
+    vg:     '{{ item.vg }}'
+    size:   '{{ item.size }}'
+    state:  '{{ item.state | d("present") }}'
+    opts:   '{{ item.opts  | d(glusterfs_server__default_lvm_lv_options) }}'
+    force:  '{{ item.force | d(omit) }}'
+  with_items: '{{ glusterfs_server__combined_lvm_volumes }}'
+  when: item.lv|d(False) and item.vg|d(False) and item.size|d(False) and
+        item.state|d("present") != 'absent'
+
+- name: Setup file systems on bricks
+  filesystem:
+    device: '{{ item.device }}'
+    fstype: '{{ item.fs_type|d(glusterfs_server__default_fs_type) }}'
+    opts: '{{ item.fs_opts|d(omit) }}'
+    force: '{{ item.force|d(omit) }}'
+  when: item.device|d(False) and item.state|d("present") != "absent"
+  with_items: '{{ glusterfs_server__combined_bricks }}'
+
+- name: Create mounting directory for bricks
+  file:
+    path: '{{ glusterfs_server__default_mount_path }}'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Mount brick filesystems
+  mount:
+    path: '{{ item.mount
+              if (item.mount == item.mount | realpath)
+              else (glusterfs_server__default_mount_path + "/" + item.mount) }}'
+    src: '{{ item.device }}'
+    fstype: '{{ item.fs_type|d(glusterfs_server__default_fs_type) }}'
+    opts: '{{ item.mount_opts|d(omit) }}'
+    state: '{{ item.state|d("mounted") }}'
+  when: item.mount|d(False) and item.device|d(False) and
+        item.state|d("mounted") != "absent"
+  with_items: '{{ glusterfs_server__combined_bricks }}'
+
+- name: Create brick directory on mounted file systems
+  file:
+    path: '{{ (item.mount
+               if (item.mount == item.mount | realpath)
+               else (glusterfs_server__default_mount_path + "/" + item.mount))
+             + "/" + glusterfs_server__default_brick_directory }}'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  when: item.mount|d(False) and item.state|d("mounted") != "absent"
+  with_items: '{{ glusterfs_server__combined_bricks }}'
+
+- name: Create Gluster volumes
+  gluster_volume:
+    state: '{{ item.state|d("present") }}'
+    name: '{{ item.name }}'
+    disperses: '{{ (((item.bricks | count) * (item.peers | count)) if item.mode == "disperse" else None) | int or omit }}'
+    replicas: '{{ (((pt-item.bricks | count) * (item.peers | count)) if item.mode == "replicate" else None) | int or omit }}'
+    redundancies: '{{ item.redundancy | d(omit) }}'
+    bricks: '{{ item.bricks | join(",") }}'
+    cluster: '{{ item.peers }}'
+    start_on_create: '{{ (item.state | d("present")) == "started" }}'
+  when: item.name|d(False) and
+        item.mode is defined and item.mode in [ "disperse", "replicate" ] and
+        item.bricks|d(False) and item.peers|d(False) and
+        item.state|d("present") != "absent"
+  with_items: '{{ glusterfs_server__volumes }}'
+  run_once: True
+
+- name: Install SSL/TLS certificates
+  file:
+    src: '/etc/pki/realms/{{ glusterfs_server__pki_realm }}/{{ item.src }}'
+    path: '{{ item.path }}'
+    owner: 'root'
+    group: 'root'
+    state: 'link'
+  with_items:
+    - path: '/etc/ssl/glusterfs.ca'
+      src: 'CA.crt'
+    - path: '/etc/ssl/glusterfs.pem'
+      src: 'default.crt'
+    - path: '/etc/ssl/glusterfs.key'
+      src: 'default.key'
+  when: not glusterfs_server__manage_tls_disabled
+
+- name: Ensure encryption of the management path
+  file:
+    path: '/var/lib/glusterd/secure-access'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    state: 'touch'
+    modification_time: 'preserve'
+    access_time: 'preserve'
+  notify: 'Restart Gluster daemon'
+  when: not glusterfs_server__manage_tls_disabled
+
+- name: Make sure that Ansible local facts directory exists
+  file:
+    path: '/etc/ansible/facts.d'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Save glusterfs_server local facts
+  template:
+    src: 'etc/ansible/facts.d/glusterfs_server.fact.j2'
+    dest: '/etc/ansible/facts.d/glusterfs_server.fact'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  register: glusterfs_server__register_facts
+
+- name: Update Ansible facts if they were modified
+  action: setup
+  when: glusterfs_server__register_facts is changed

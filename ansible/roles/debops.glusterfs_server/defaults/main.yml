@@ -1,0 +1,336 @@
+---
+# .. vim: foldmarker=[[[,]]]:foldmethod=marker
+
+# debops.glusterfs_server default variables [[[
+# =============================================
+
+# .. contents:: Sections
+#    :local:
+#
+# .. include:: ../../../includes/global.rst
+
+# APT packages [[[
+# ----------------
+
+# .. envvar:: glusterfs_server__base_packages [[[
+#
+# List of minimal APT packages required for Gluster cluster to be deployed.
+glusterfs_server__base_packages:
+  - 'lvm2'
+  - 'xfsprogs'
+  - 'glusterfs-server'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__packages [[[
+#
+# List of APT packages required for Gluster cluster to be deployed.
+glusterfs_server__packages: []
+
+                                                                           # ]]]
+                                                                           # ]]]
+# Gluster daemon [[[
+# ------------------
+
+# .. envvar:: glusterfs_server__daemon_port [[[
+#
+# Port on which Gluster server daemin is listening.
+glusterfs_server__daemon_port: '24007'
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__manage_port [[[
+#
+# Port used by the servers in a cluster for management.
+glusterfs_server__manage_port: '24008'
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__first_brick_port [[[
+#
+# Port that is allocated for the first brick to communicate with cluster.
+glusterfs_server__first_brick_port: '49152'
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__last_brick_port [[[
+#
+# Port that is allocated for the last brick to communicate with cluster.
+glusterfs_server__last_brick_port: '49162'
+                                                                           # ]]]
+                                                                           # ]]]
+# Gluster trusted pool [[[
+# ------------------------
+
+# .. envvar:: glusterfs_server__default_trusted_pool [[[
+#
+# Default trusted pool with only localhost host. This can be used for one server
+# replication for instance.
+glusterfs_server__default_trusted_pool: [ '127.0.0.1' ]
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__trusted_pool [[[
+#
+# List of hosts (DNS or IP addresses) that belongs to the same trusted pool.
+# This variable must be set at a group level (e.g. group_vars/all).
+glusterfs_server__trusted_pool: '{{ glusterfs_server__default_trusted_pool }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+# LVM [[[
+# -------
+
+# .. envvar:: glusterfs_server__default_lvm_pv_options [[[
+#
+# Default options to be passed when creating a new LVM physical volume.
+glusterfs_server__default_lvm_pv_options: ''
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__default_lvm_vg_options [[[
+#
+# Default options to be passed when creating a new LVM volume group.
+glusterfs_server__default_lvm_vg_options: ''
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__default_lvm_lv_options [[[
+#
+# Default options to be passed when creating a new LVM volume group.
+glusterfs_server__default_lvm_lv_options: ''
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__lvm_groups [[[
+#
+# The list of LVM groups that must be configured on all hosts in the Ansible
+# inventory.
+glusterfs_server__lvm_groups: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__group_lvm_groups [[[
+#
+# The list of LVM groups that must be configured on all hosts of a specific
+# group in the Ansible inventory.
+glusterfs_server__group_lvm_groups: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__host_lvm_groups [[[
+#
+# The list of LVM groups that must be configured on a specific host in the
+# Ansible inventory.
+glusterfs_server__host_lvm_groups: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__dependent_lvm_groups [[[
+#
+# The list of LVM groups that must be configured from a dependent Ansible role.
+glusterfs_server__dependent_lvm_groups: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__combined_lvm_groups [[[
+#
+# The list of combined LVM groups that must be configured on a host.
+glusterfs_server__combined_lvm_groups: '{{ glusterfs_server__lvm_groups
+                                         + glusterfs_server__group_lvm_groups
+                                         + glusterfs_server__host_lvm_groups
+                                         + glusterfs_server__dependent_lvm_groups }}'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__lvm_volumes [[[
+#
+# The list of LVM volumes that must be configured on all hosts in the Ansible
+# inventory.
+glusterfs_server__lvm_volumes: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__group_lvm_volumes [[[
+#
+# The list of LVM volumes that must be configured on all hosts of a specific
+# group in the Ansible inventory.
+glusterfs_server__group_lvm_volumes: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__host_lvm_volumes [[[
+#
+# The list of LVM volumes that must be configured on a specific host in the
+# Ansible inventory.
+glusterfs_server__host_lvm_volumes: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__dependent_lvm_volumes [[[
+#
+# The list of LVM volumes that must be configured from a dependent Ansible role.
+glusterfs_server__dependent_lvm_volumes: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__combined_lvm_volumes [[[
+#
+# The List of combined LVM volumes that must be configured on a host.
+glusterfs_server__combined_lvm_volumes: '{{ glusterfs_server__lvm_volumes
+                                          + glusterfs_server__group_lvm_volumes
+                                          + glusterfs_server__host_lvm_volumes
+                                          + glusterfs_server__dependent_lvm_volumes }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+# Bricks [[[
+# ----------
+
+# .. envvar:: glusterfs_server__default_fs_type [[[
+#
+# The default file system to install on a brick block device.
+glusterfs_server__default_fs_type: 'xfs'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__default_fs_force [[[
+#
+# The default behavior when a file system is already set up on the block device.
+# If set to `True`, then the existing file system will be erased.
+glusterfs_server__default_fs_force: False
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__default_brick_directory [[[
+#
+# The default brick directory at the root of the brick file system.
+glusterfs_server__default_brick_directory: 'brick'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__default_mount_path [[[
+#
+# The default path where bricks will be mounted.
+glusterfs_server__default_mount_path: '/srv/glusterfs'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__bricks [[[
+#
+# The list of bricks to set up on every hosts in the Ansible inventory.
+glusterfs_server__bricks: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__group_bricks [[[
+#
+# The list of bricks to set up on every hosts in a specific group in the
+# Ansible inventory.
+glusterfs_server__group_bricks: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__host_bricks [[[
+#
+# The list of bricks to set up on a specific host in the Ansible inventory.
+glusterfs_server__host_bricks: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__dependent_bricks [[[
+#
+# The list of bricks to set up from a dependent Ansible role.
+glusterfs_server__dependent_bricks: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__combined_bricks [[[
+#
+# The list of combined bricks to set up on a host in the Ansible inventory.
+glusterfs_server__combined_bricks: '{{ glusterfs_server__bricks
+                                     + glusterfs_server__group_bricks
+                                     + glusterfs_server__host_bricks
+                                     + glusterfs_server__dependent_bricks }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+# Network [[[
+# -----------
+
+# .. envvar:: glusterfs_server__allow [[[
+#
+# List of IP addresses and network CIDR that are allowed to access the cluster,
+# which is applied to all hosts in the Ansible inventory.
+glusterfs_server__allow: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__group_allow [[[
+#
+# List of IP addresses and subnets that are allowed to access the cluster,
+# which is applied to to hosts in a specific group of the Ansible inventory.
+glusterfs_server__group_allow: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__host_allow [[[
+#
+# List of IP addresses and subnets that are allowed to access the cluster,
+# which is applied to a specific host in the Ansible inventory.
+glusterfs_server__host_allow: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__dependent_allow [[[
+#
+# List of IP addresses and subnets that are allowed to access the cluster that
+# is provided by another Ansible role.
+glusterfs_server__dependent_allow: []
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__combined_allow [[[
+#
+# List of combined IP addresses and subnets that are allowed to access the
+# cluster.
+glusterfs_server__combined_allow: '{{ glusterfs_server__allow
+                                    + glusterfs_server__group_allow
+                                    + glusterfs_server__host_allow
+                                    + glusterfs_server__dependent_allow }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+# SSL/TLS [[[
+# -----------
+
+# .. envvar:: glusterfs_server__manage_tls_disabled [[[
+#
+# This disables encryption of management path.
+glusterfs_server__manage_tls_disabled: False
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__pki_realm [[[
+#
+# The name of the PKI realm, defaulted to the Ansible fully qualified hostname.
+glusterfs_server__pki_realm: '{{ ansible_local.pki.realm
+                                 if (ansible_local|d() and ansible_local.pki|d() and
+                                     ansible_local.pki.realm|d())
+                                 else "domain" }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+# Configuration for other Ansible roles [[[
+# -----------------------------------------
+
+# .. envvar:: glusterfs_server__etc_services__dependent_list [[[
+#
+# Configuration for the :ref:`debops.etc_services` Ansible role.
+glusterfs_server__etc_services__dependent_list:
+
+  - name: 'gluster-daemon'
+    port: '{{ glusterfs_server__daemon_port }}'
+
+  - name: 'gluster-manage'
+    port: '{{ glusterfs_server__manage_port }}'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__ferm__dependent_rules [[[
+#
+# Configuration for the :ref:`debops.ferm` Ansible role.
+glusterfs_server__ferm__dependent_rules:
+
+  - name: 'glusterfs_server_daemon'
+    type: 'accept'
+    dport: '{{ glusterfs_server__daemon_port }}'
+    saddr: '{{ glusterfs_server__combined_allow + glusterfs_server__trusted_pool }}'
+
+  - name: 'glusterfs_server_manage'
+    type: 'accept'
+    dport: '{{ glusterfs_server__manage_port }}'
+    saddr: '{{ glusterfs_server__combined_allow + glusterfs_server__trusted_pool }}'
+
+  - name: 'glusterfs_server_bricks'
+    type: 'accept'
+    dport: '{{ glusterfs_server__first_brick_port }}:{{ glusterfs_server__last_brick_port }}'
+    saddr: '{{ glusterfs_server__combined_allow + glusterfs_server__trusted_pool }}'
+
+                                                                           # ]]]
+# .. envvar:: glusterfs_server__gluster_org__dependent_packages [[[
+#
+# Configuration for the :ref:`debops.gluster_org` Ansible role.
+glusterfs_server__gluster_org__dependent_packages:
+  - '{{ glusterfs_server__base_packages }}'
+  - '{{ glusterfs_server__packages }}'
+
+                                                                           # ]]]
+                                                                           # ]]]
+                                                                           # ]]]

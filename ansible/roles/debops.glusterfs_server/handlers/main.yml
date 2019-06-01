@@ -1,0 +1,12 @@
+---
+
+- name: Start Gluster daemon
+  service:
+    name: 'glusterfs-server'
+    state: 'started'
+    enabled: True
+
+- name: Restart Gluster daemon
+  service:
+    name: 'glusterfs-server'
+    state: 'restarted'

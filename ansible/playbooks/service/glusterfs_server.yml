@@ -1,0 +1,33 @@
+---
+
+- name: Install and manage Gluster server
+  hosts: [ 'debops_service_glusterfs_server' ]
+  become: True
+
+  environment: '{{ inventory__environment | d({})
+                   | combine(inventory__group_environment | d({}))
+                   | combine(inventory__host_environment  | d({})) }}'
+
+  roles:
+
+    - role: debops.etc_services
+      tags: [ 'role::etc_services', 'skip::etc_services' ]
+      etc_services__dependent_list:
+        - '{{ glusterfs_server__etc_services__dependent_list }}'
+
+    - role: debops.ferm
+      tags: [ 'role::ferm', 'skip::ferm' ]
+      ferm__dependent_rules:
+        - '{{ glusterfs_server__ferm__dependent_rules }}'
+
+    - role: debops.pki
+      tags: [ 'role::pki', 'skip::pki' ]
+      when: not glusterfs_server__manage_tls_disabled
+
+    - role: debops.gluster_org
+      tags: [ 'role::gluster_org', 'skip::gluster_org' ]
+      gluster_org__dependent_packages:
+        - '{{ glusterfs_server__gluster_org__dependent_packages }}'
+
+    - role: debops.glusterfs_server
+      tags: [ 'role::glusterfs_server', 'skip::glusterfs_server' ]
