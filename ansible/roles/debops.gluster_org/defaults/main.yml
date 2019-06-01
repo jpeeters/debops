@@ -1,0 +1,92 @@
+---
+# .. vim: foldmarker=[[[,]]]:foldmethod=marker
+
+# debops.gluster_org default variables [[[
+# =======================================
+
+# .. contents:: Sections
+#    :local:
+#
+# .. include:: ../../../includes/global.rst
+
+# APT repository configuration [[[
+# --------------------------------
+
+# .. envvar:: gluster_org__version [[[
+#
+# Specify the version of the Gluster APT repository you wish to install.
+# The role will remember the selected version using Ansible local facts which
+# should ensure that in the future currently installed version of the APT
+# repository stays the same on a given host.
+gluster_org__version: '{{ ansible_local.gluster_org.version
+                          if (ansible_local|d() and ansible_local.gluster_org|d() and
+                              ansible_local.gluster_org.version|d())
+                          else "5.2" }}'
+
+                                                                            #]]]
+# .. envvar:: gluster_org__version_major [[[
+#
+# Compute the major version of the Gluster APT repository you wish to install.
+# The role will remember the selected version using Ansible local facts which
+# should ensure that in the future currently installed version of the APT
+# repository stays the same on a given host.
+gluster_org__version_major: '{{ gluster_org__version.split(".")[0] }}'
+
+                                                                            #]]]
+# .. envvar:: gluster_org__key_url [[[
+#
+# Compute the major version of the Gluster APT repository you wish to install.
+gluster_org__key_url: 'https://download.gluster.org/pub/gluster/glusterfs/{{ gluster_org__version_major }}/rsa.pub'
+
+                                                                            #]]]
+# .. envvar:: gluster_org__distrib_release [[[
+#
+# APT repository distribution release to configure for Gluster repository.
+gluster_org__distrib_release: '{{ ansible_distribution_release }}'
+
+                                                                            #]]]
+# .. envvar:: gluster_org__distrib_arch [[[
+#
+# APT repository architecture to configure for Gluster repository.
+gluster_org__distrib_arch: 'amd64'
+
+                                                                            #]]]
+# .. envvar:: gluster_org__repository [[[
+#
+# APT repository entry to configure for Gluster repository.
+gluster_org__repository: 'deb https://download.gluster.org/pub/gluster/glusterfs/{{ gluster_org__version_major }}/{{ gluster_org__version }}/Debian/{{ gluster_org__distrib_release }}/{{ gluster_org__distrib_arch }}/apt {{ gluster_org__distrib_release }} main'
+
+                                                                            #]]]
+                                                                            #]]]
+# APT packages [[[
+# --------------------------------
+
+# .. envvar:: gluster_org__packages [[[
+#
+# List of Gluster APT packages to install on all hosts in the Ansible inventory.
+gluster_org__packages: []
+
+                                                                            #]]]
+# .. envvar:: gluster_org__group_packages [[[
+#
+# List of Gluster APT packages to install on hosts in a specific Ansible
+# inventory group.
+gluster_org__group_packages: []
+
+                                                                            #]]]
+# .. envvar:: gluster_org__host [[[
+#
+# List of Gluster APT packages to install on a specific hosts in the Ansible
+# inventory.
+gluster_org__host_packages: []
+
+                                                                            #]]]
+# .. envvar:: gluster_org__dependent_packages [[[
+#
+# List of Gluster APT packages requested for installation by other Ansible roles
+# through role dependent variables.
+gluster_org__dependent_packages: []
+
+                                                                            #]]]
+                                                                            #]]]
+                                                                            #]]]

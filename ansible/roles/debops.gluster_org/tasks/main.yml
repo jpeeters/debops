@@ -1,0 +1,45 @@
+---
+
+- name: Ensure that APT key of Gluster repositories is installed.
+  apt_key:
+    url: '{{ gluster_org__key_url }}'
+    state: 'present'
+
+- name: Ensure that APT repository for Gluster is installed.
+  apt_repository:
+    update_cache: True
+    repo: '{{ gluster_org__repository }}'
+    state: 'present'
+    filename: 'gluster_org'
+
+- name: Install Gluster packages
+  package:
+    name: '{{ item }}'
+  with_flattened:
+    - '{{ gluster_org__packages }}'
+    - '{{ gluster_org__group_packages }}'
+    - '{{ gluster_org__host_packages }}'
+    - '{{ gluster_org__dependent_packages }}'
+  register: gluster_org__register_install
+
+- name: Ensure that Ansible local facts directory exists
+  file:
+    path: '/etc/ansible/facts.d'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Save Gluster local facts
+  template:
+    src: 'etc/ansible/facts.d/gluster_org.fact.j2'
+    dest: '/etc/ansible/facts.d/gluster_org.fact'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  register: gluster_org__register_facts
+
+- name: Update Ansible facts if they were modified
+  action: setup
+  when: (gluster_org__register_facts is changed or
+         gluster_org__register_install is changed)
