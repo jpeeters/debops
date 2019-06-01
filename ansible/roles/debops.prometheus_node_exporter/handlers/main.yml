@@ -1,0 +1,12 @@
+---
+
+- name: Start Prometheus Node exporter daemon
+  service:
+    name: 'prometheus-node-exporter'
+    state: 'started'
+    enabled: True
+
+- name: Restart Prometheus Node exporter daemon
+  service:
+    name: 'prometheus-node-exporter'
+    state: 'restarted'

@@ -1,0 +1,20 @@
+---
+
+dependencies: []
+
+galaxy_info:
+
+  role_name: 'prometheus_node_exporter'
+  author: 'Julien Peeters'
+  description: 'Install and manage Prometheus node exporter'
+  company: 'Monkey Codex SAS'
+  license: 'GPL-3.0'
+  min_ansible_version: '2.5.0'
+  platforms:
+    - name: Debian
+      versions:
+        - stretch
+  galaxy_tags:
+    - metrics
+    - supervision
+    - prometheus

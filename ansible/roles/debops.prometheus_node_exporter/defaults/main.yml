@@ -1,0 +1,70 @@
+---
+# .. vim: foldmarker=[[[,]]]:foldmethod=marker
+
+# debops.prometheus_node_exporter default variables
+# =================================================
+
+# .. contents:: Sections
+#    :local:
+#
+# .. include:: ../../../includes/global.rst
+
+# APT packages [[[
+# ----------------
+
+# .. envvar:: prometheus_node_exporter__base_packages [[[
+#
+# List of minimal APT packages required for Gluster cluster to be deployed.
+prometheus_node_exporter__base_packages:
+  - 'prometheus-node-exporter'
+
+                                                                           # ]]]
+# .. envvar:: prometheus_node_exporter__packages [[[
+#
+# List of APT packages required for Gluster cluster to be deployed.
+prometheus_node_exporter__packages: []
+
+                                                                           # ]]]
+                                                                           # ]]]
+# Prometheus Node exporter daemon [[[
+# -----------------------------------
+
+# .. envvar:: prometheus_node_exporter__daemon_port [[[
+#
+# Port on which Gluster server daemin is listening.
+prometheus_node_exporter__daemon_port: '9100'
+                                                                           # ]]]
+                                                                           # ]]]
+# Configuration for other Ansible roles [[[
+# -----------------------------------------
+
+# .. envvar:: prometheus_node_exporter__etc_services__dependent_list [[[
+#
+# Configuration for the :ref:`debops.etc_services` Ansible role.
+prometheus_node_exporter__etc_services__dependent_list:
+
+  - name: 'prom-node'
+    port: '{{ prometheus_node_exporter__daemon_port }}'
+
+                                                                           # ]]]
+# .. envvar:: prometheus_node_exporter__ferm__dependent_rules [[[
+#
+# Configuration for the :ref:`debops.ferm` Ansible role.
+prometheus_node_exporter__ferm__dependent_rules:
+
+  - name: 'prometheus_node_exporter_daemon'
+    type: 'accept'
+    dport: '{{ prometheus_node_exporter__daemon_port }}'
+
+                                                                           # ]]]
+# .. envvar:: prometheus_node_exporter__ferm__dependent_rules [[[
+#
+# Configuration for the :ref:`debops.ferm` Ansible role.
+prometheus_node_exporter__apt_preferences__dependent_list:
+
+  - packages: '{{ prometheus_node_exporter__base_packages }}'
+    backports: [ 'jessie', 'stretch' ]
+    reason: 'Stay closer to the upstream version'
+
+                                                                           # ]]]
+                                                                           # ]]]

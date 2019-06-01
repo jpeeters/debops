@@ -1,0 +1,6 @@
+---
+
+- name: Install base packages
+  apt:
+    name: '{{ item }}'
+  loop: '{{ prometheus_node_exporter__base_packages }}'
