@@ -1,0 +1,23 @@
+---
+
+- name: Install and manage Gluster client
+  hosts: [ 'debops_service_glusterfs' ]
+  become: True
+
+  environment: '{{ inventory__environment | d({})
+                   | combine(inventory__group_environment | d({}))
+                   | combine(inventory__host_environment  | d({})) }}'
+
+  roles:
+
+    - role: debops.pki
+      tags: [ 'role::pki', 'skip::pki' ]
+      when: not glusterfs__manage_tls_disabled
+
+    - role: debops.gluster_org
+      tags: [ 'role::gluster_org', 'skip::gluster_org' ]
+      gluster_org__dependent_packages:
+        - '{{ glusterfs__gluster_org__dependent_packages }}'
+
+    - role: debops.glusterfs
+      tags: [ 'role::glusterfs', 'skip::glusterfs' ]

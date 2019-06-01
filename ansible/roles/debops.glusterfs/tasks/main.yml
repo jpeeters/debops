@@ -1,0 +1,56 @@
+---
+
+- name: Install SSL/TLS certificates
+  file:
+    src: '/etc/pki/realms/{{ glusterfs__pki_realm }}/{{ item.src }}'
+    path: '{{ item.path }}'
+    owner: 'root'
+    group: 'root'
+    state: 'link'
+  with_items:
+    - path: '/etc/ssl/glusterfs.ca'
+      src: 'CA.crt'
+    - path: '/etc/ssl/glusterfs.pem'
+      src: 'default.crt'
+    - path: '/etc/ssl/glusterfs.key'
+      src: 'default.key'
+  when: not glusterfs__manage_tls_disabled
+
+- name: Ensure runtime directory exists
+  file:
+    path: '/var/lib/glusterd'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  when: not glusterfs__manage_tls_disabled
+
+- name: Ensure encryption of the management path
+  file:
+    path: '/var/lib/glusterd/secure-access'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    state: 'touch'
+  when: not glusterfs__manage_tls_disabled
+
+- name: Make sure that Ansible local facts directory exists
+  file:
+    path: '/etc/ansible/facts.d'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Save glusterfs local facts
+  template:
+    src: 'etc/ansible/facts.d/glusterfs.fact.j2'
+    dest: '/etc/ansible/facts.d/glusterfs.fact'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  register: glusterfs__register_facts
+
+- name: Update Ansible facts if they were modified
+  action: setup
+  when: glusterfs__register_facts is changed
